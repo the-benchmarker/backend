@@ -1,0 +1,86 @@
+#!/usr/bin/env ruby
+
+while (index = ARGV.index('-I'))
+  _,path = ARGV.slice!(index, 2)
+  $: << path
+end
+
+$: << File.join(File.dirname(__FILE__), "../app")
+
+require 'optparse'
+
+require 'agoo'
+require 'models'
+
+# TBD I know this isn't Rack and will need to be changed. Consider it a first
+# step to try out the GraphQL hookups.
+
+$verbose = false
+$port = 7890
+$root = File.expand_path(File.join(File.dirname(__FILE__), "../public"))
+
+opts = OptionParser.new(%{Usage: backend [options]
+
+Start the server ...
+})
+opts.on('-v', 'verbose')                                                  { $verbose = true }
+opts.on('-p', '--port Integer', Integer, 'port to listen on')             { |p| $port = p }
+opts.on('-h', '--help', 'Show this display')                              { puts opts.help; Process.exit!(0) }
+opts.parse(ARGV)
+
+# This is the class that implemnts the root query operation.
+class Query
+  attr_reader :languages
+
+  def initialize
+    # TBD create some dummy data
+    ruby = Models::Language.new('ruby')
+    ruby.frameworks << Models::Framework.new('agoo')
+    @languages = [ ruby ]
+  end
+
+end
+
+class Schema
+  attr_reader :query
+
+  def initialize
+    @query = Query.new
+  end
+end
+
+Agoo::Log.configure(dir: '',
+		    console: true,
+		    classic: true,
+		    colorize: true,
+		    states: {
+		      INFO: true,
+		      DEBUG: false,
+		      connect: $verbose,
+		      request: $verbose,
+		      response: $verbose,
+		      eval: $verbose,
+		      push: false,
+		    })
+
+File.open(File.expand_path(File.join(File.dirname(__FILE__), "../public/schema.graphql")), 'r') { |f|
+  $sdl = f.read
+}
+
+begin
+  Agoo::Server.init($port, $root, thread_count: 1, graphql: '/graphql')
+  Agoo::Server.start()
+  Agoo::GraphQL.schema(Schema.new) {
+    Agoo::GraphQL.load($sdl)
+  }
+rescue Exception => e
+  puts "\n*-*-* #{e.class}: #{e.message}"
+  e.backtrace.each { |line| puts "  #{line}" } if $verbose
+  puts
+end
+
+# When starting with a thread_count over 0 just sleep until a ^C is
+# signalled. Agoo must be running to load the SDL.
+sleep
+
+# localhost:7890/graphql?query={language{label,frameworks{label}}}&indent=2

@@ -1,0 +1,15 @@
+
+type Query {
+  languages: [Language]
+  language(label: String!): Language
+}
+
+type Language {
+  label: String!
+  frameworks: [Framework]
+  framework(label: String!): Framework
+}
+
+type Framework {
+  label: String!
+}
