@@ -9,6 +9,8 @@ $: << File.join(File.dirname(__FILE__), "../app")
 
 require 'optparse'
 
+require 'active_record'
+
 require 'agoo'
 require 'models'
 
@@ -18,25 +20,22 @@ require 'models'
 $verbose = false
 $port = 7890
 $root = File.expand_path(File.join(File.dirname(__FILE__), "../public"))
+$dummy = false
 
 opts = OptionParser.new(%{Usage: backend [options]
 
 Start the server ...
 })
-opts.on('-v', 'verbose')                                                  { $verbose = true }
-opts.on('-p', '--port Integer', Integer, 'port to listen on')             { |p| $port = p }
-opts.on('-h', '--help', 'Show this display')                              { puts opts.help; Process.exit!(0) }
+opts.on('-v', 'verbose')                                       { $verbose = true }
+opts.on('-d', 'dummy')                                         { $dummy = true }
+opts.on('-p', '--port Integer', Integer, 'port to listen on')  { |p| $port = p }
+opts.on('-h', '--help', 'Show this display')                   { puts opts.help; Process.exit!(0) }
 opts.parse(ARGV)
 
 # This is the class that implemnts the root query operation.
 class Query
-  attr_reader :languages
-
-  def initialize
-    # TBD create some dummy data
-    ruby = Models::Language.new('ruby')
-    ruby.frameworks << Models::Framework.new('agoo')
-    @languages = [ ruby ]
+  def languages
+    Models::Language.all.each { |lang| lang }
   end
 
 end
@@ -66,6 +65,19 @@ Agoo::Log.configure(dir: '',
 File.open(File.expand_path(File.join(File.dirname(__FILE__), "../public/schema.graphql")), 'r') { |f|
   $sdl = f.read
 }
+
+# TBD change to use config/database.yaml
+ActiveRecord::Base.establish_connection(
+  adapter: 'postgresql',
+  host: 'localhost',
+  username: 'ohler',
+  password: '',
+  database: 'benchmark')
+
+if $dummy
+  Models::Language.create(label: 'ruby')
+  Models::Language.create(label: 'c')
+end
 
 begin
   Agoo::Server.init($port, $root, thread_count: 1, graphql: '/graphql')

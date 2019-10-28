@@ -12,4 +12,10 @@ type Language {
 
 type Framework {
   label: String!
+  metrics: [Metric]
+}
+
+type Metrics {
+  key: ID
+  value: Float
 }

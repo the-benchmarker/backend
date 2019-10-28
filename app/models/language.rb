@@ -1,15 +1,9 @@
 
+require 'active_record'
+
 module Models
 
-  class Language
-
-    attr_accessor :label
-    attr_accessor :frameworks
-
-    def initialize(label)
-      @label = label
-      @frameworks = []
-    end
+  class Language < ActiveRecord::Base
 
   end
 end
