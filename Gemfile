@@ -9,3 +9,5 @@ gem 'rake', '~> 13.0.0'
 group :development, :test do
   gem 'rubocop'
 end
+
+gem "agoo", "~> 2.11"
