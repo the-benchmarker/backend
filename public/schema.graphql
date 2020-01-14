@@ -1,21 +1,93 @@
 
 type Query {
+
+  "languages in the data set. Can be used to get results across all languages."
   languages: [Language]
+
+  "language can be used to get results for a specific language."
   language(label: String!): Language
+
+  """
+  environments is another way for viewing results. Results can be looked up by
+  a specific run.
+  """
+  environments: [Environment]
 }
 
 type Language {
+
+  "label such as C or Ruby."
   label: String!
+
+  "version such as 2.6.5"
+  version: String
+
+  "frameworks is a list of all the frameworks for the language."
   frameworks: [Framework]
+
+  "framework looks up a specific framework in the language."
   framework(label: String!): Framework
 }
 
 type Framework {
+
+  "label for the framework such as Agoo."
   label: String!
-  metrics: [Metric]
+
+  "language refers to the language the frameowrk is written in."
+  language: Language
+
+  "results for the framework with the most recent first."
+  results: [Result]
 }
 
-type Metrics {
-  key: ID
-  value: Float
+type Environment {
+
+  "time the environment was used for a run."
+  time: Time
+
+  "OS used in a run such as Linux (version: 5.4.8-050408-generic, arch: x86_64)"
+  os: String
+
+  "cpuCores are the number of cores on the machine that the run was made on."
+  cpuCores: Int
+
+  "connections is the number of simultaneous connection made to the server."
+  connections: Int
+
+  "duration of the run in seconds."
+  duration: Int
+
+  "results of the run across all frameworks."
+  results: [Result]
+}
+
+type Result {
+
+  "framework of the result."
+  framework: Framework
+
+  "environment used to acquire the results"
+  environment: Environment
+
+  "rate in requests per second."
+  rate: Float
+
+  "latencyMedian is the median latency in milliseconds."
+  latencyMedian: Float
+
+  "latencyAverage is the average latency in milliseconds."
+  latencyAverage: Float
+
+  "latency90 is the lowest latency in milliseconds that 90% of the requests returned in."
+  latency90: Float
+
+  "latency99 is the lowest latency in milliseconds that 99% of the requests returned in."
+  latency99: Float
+
+  "latency999 is the lowest latency in milliseconds that 99.9% of the requests returned in."
+  latency999: Float
+
+  "latencyStdDev is the standard deviation of the latencies."
+  latencyStdDev: Float
 }
